@@ -1,25 +1,57 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useRef,useEffect} from 'react';
+import ToDoList from './ToDoList';
+const { v4: uuidv4 } = require('uuid');
+//useEffect
+//useRef allows us to use things from the website
+const LOCAL_STORAGE_KEY = 'todoApp.todos'
 
 function App() {
+  const [todos, setTodos] =  useState([]) //this is a hook function that allows state variables in functional componenets
+  //{id:1 , name: 'Todo 1',complete:false}
+  //use state returns an array
+  //important to know object destructuring
+  const todoNameRef = useRef()
+
+  useEffect(() => {
+    const storedTodos = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY))
+    if (storedTodos) setTodos(storedTodos)
+  },[])//this empty array means it only happens once
+
+
+  useEffect(()=>{
+    localStorage.setItem(LOCAL_STORAGE_KEY,JSON.stringify(todos))
+  },[todos])
+  function handleAddTodo(e){ //e = event
+    const name = todoNameRef.current.value
+    if (name === '') return
+    setTodos(prevTodos => {
+      return [...prevTodos, {id: uuidv4() , name: name,complete:false}]
+    })//this uuidv4 randomizes ids
+    todoNameRef.current.value = null
+  }
+
+  function toggleTodo(id){
+    const newTodos = [...todos]//never directly modify a state variable .. create a copy before modifying
+    const todo = newTodos.find(todo => todo.id === id)
+    todo.complete = !todo.complete
+    setTodos(newTodos)
+  }
+
+  function handleClearTodos(){
+    const newTodos = todos.filter(todo => !todo.complete)
+    setTodos(newTodos)
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <>
+
+      <ToDoList todos = {todos} toggleTodo={toggleTodo} /> 
+      <input ref ={todoNameRef} type="text"/>
+      <button onClick={handleAddTodo}>Add Todo</button>
+      <button onClick={handleClearTodos}>Clear Complete</button>
+      <div>{todos.filter(todo => !todo.complete).length} left todo</div>  
+    </>
+  )
 }
 
 export default App;
